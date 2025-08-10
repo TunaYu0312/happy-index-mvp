@@ -245,6 +245,41 @@
         border: 2px solid #e9ecef;
     }
     
+    .tab-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        padding: 12px 20px;
+        background: #e9ecef;
+        color: #666;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin: 0;
+    }
+    
+    .tab-btn.active {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        transform: none;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
     .mood-card {
         background: white;
         padding: 20px;
@@ -298,13 +333,13 @@
         align-items: center;
         gap: 5px;
         padding: 8px 12px;
-        border: none;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
         border-radius: 20px;
         cursor: pointer;
         font-size: 14px;
-        transition: all 0.3s ease;
-        background: #f8f9fa;
-        color: #666;
+        transition: all 0.2s ease;
+        margin: 0;
     }
     
     .action-btn:hover {
@@ -313,38 +348,44 @@
     }
     
     .action-btn.liked {
-        background: #ff4757;
-        color: white;
+        background: #ffe6e6;
+        border-color: #ff9999;
+        color: #d63384;
     }
     
-    .action-btn.comment-btn {
-        background: #3742fa;
-        color: white;
+    .privacy-indicator {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        font-weight: 600;
+        margin-right: 10px;
+    }
+    
+    .privacy-public {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .privacy-private {
+        background: #f8d7da;
+        color: #721c24;
     }
     
     .comments-section {
+        display: none;
         margin-top: 15px;
         padding-top: 15px;
         border-top: 1px solid #eee;
-        display: none;
     }
     
     .comments-section.show {
         display: block;
     }
     
-    .comment-item {
-        background: #f8f9fa;
-        padding: 10px 15px;
-        margin: 8px 0;
-        border-radius: 8px;
-        border-left: 3px solid #667eea;
-    }
-    
     .comment-form {
         display: flex;
         gap: 10px;
-        margin-top: 10px;
+        margin-bottom: 15px;
     }
     
     .comment-input {
@@ -352,7 +393,7 @@
         padding: 8px 12px;
         border: 1px solid #ddd;
         border-radius: 20px;
-        outline: none;
+        font-size: 14px;
     }
     
     .comment-submit {
@@ -362,141 +403,69 @@
         border: none;
         border-radius: 20px;
         cursor: pointer;
+        font-size: 14px;
+        margin: 0;
+    }
+    
+    .comment-item {
+        background: #f8f9fa;
+        padding: 10px 15px;
+        margin: 8px 0;
+        border-radius: 10px;
+        border-left: 3px solid #667eea;
     }
     
     .loading {
         text-align: center;
-        padding: 20px;
         color: #666;
-    }
-    
-    .error {
-        background: #ffebee;
-        color: #c62828;
-        padding: 15px;
-        border-radius: 8px;
-        margin: 10px 0;
-        border-left: 4px solid #c62828;
+        font-style: italic;
+        padding: 20px;
     }
     
     .success {
-        background: #e8f5e8;
-        color: #2e7d32;
-        padding: 15px;
-        border-radius: 8px;
+        background: #d4edda;
+        color: #155724;
+        padding: 10px 15px;
+        border-radius: 5px;
         margin: 10px 0;
-        border-left: 4px solid #2e7d32;
+        border: 1px solid #c3e6cb;
     }
     
-    .tab-container {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
-        border-bottom: 2px solid #eee;
+    .error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 10px 15px;
+        border-radius: 5px;
+        margin: 10px 0;
+        border: 1px solid #f5c6cb;
     }
     
-    .tab-btn {
-        padding: 12px 24px;
-        border: none;
-        background: none;
-        cursor: pointer;
-        font-size: 16px;
-        font-weight: 600;
-        color: #666;
-        border-bottom: 3px solid transparent;
-        transition: all 0.3s ease;
-    }
-    
-    .tab-btn.active {
-        color: #667eea;
-        border-bottom-color: #667eea;
-    }
-    
-    .tab-content {
-        display: none;
-    }
-    
-    .tab-content.active {
-        display: block;
-    }
-    
-    .privacy-indicator {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-    
-    .privacy-public {
-        background: #e8f5e8;
-        color: #2e7d32;
-    }
-    
-    .privacy-private {
-        background: #fff3e0;
-        color: #f57c00;
-    }
-    
-    @media (max-width: 768px) {
-        body {
-            padding: 10px;
-        }
-        
-        .container {
-            padding: 20px;
-        }
-        
-        h1 {
-            font-size: 1.8em;
-        }
-        
-        .mood-section, .stats, .history-section {
-            padding: 20px;
-        }
-        
-        .score-display {
-            font-size: 1.5em;
-        }
-        
-        .history-item {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .container {
-            padding: 15px;
-        }
-        
-        .mood-section, .stats, .history-section {
-            padding: 15px;
-        }
-        
-        .slider-labels {
-            font-size: 14px;
-        }
+    @media (max-width: 600px) {
+        body { padding: 10px; }
+        .container { padding: 20px; }
+        h1 { font-size: 1.8em; }
+        .mood-actions { flex-wrap: wrap; }
+        .tab-container { flex-direction: column; }
     }
 </style>
 </head>
 <body>
 <div class="container">
-    <h1>😊 今日开心指数测评</h1>
+    <h1>🌈 开心指数社区</h1>
     
     <div class="mood-section">
+        <h3>📝 记录你的心情</h3>
+        <p>拖动滑块选择你当前的开心程度：</p>
+        
         <div class="slider-container">
             <div class="slider-labels">
                 <div class="label-left">
                     <span>😢</span>
-                    <span>0分 - 心情抑郁</span>
+                    <span>很不开心</span>
                 </div>
                 <div class="label-right">
-                    <span>😄</span>
-                    <span>10分 - 非常开心</span>
+                    <span>😊</span>
+                    <span>非常开心</span>
                 </div>
             </div>
             <input type="range" min="0" max="10" value="6" class="slider" id="score">
@@ -555,36 +524,48 @@
 </div>
 
 <script>
-// 配置
-const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api';
+// 本地存储键名
+const STORAGE_KEYS = {
+    USER_ID: 'happy_index_user_id',
+    MOODS: 'happy_index_moods',
+    LIKES: 'happy_index_likes',
+    COMMENTS: 'happy_index_comments'
+};
 
 // 全局变量
-let currentUserId = localStorage.getItem('userId');
+let currentUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
 let currentPage = 1;
-let isLoading = false;
-let hasMoreData = true;
+let moodsPerPage = 10;
 
 // 初始化用户ID
 if (!currentUserId) {
-    initializeUser();
+    currentUserId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem(STORAGE_KEYS.USER_ID, currentUserId);
 }
 
-// 初始化用户
-async function initializeUser() {
+// 本地存储工具函数
+function getStorageData(key) {
     try {
-        const response = await fetch(`${API_BASE}/users`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-        const data = await response.json();
-        currentUserId = data.userId;
-        localStorage.setItem('userId', currentUserId);
+        return JSON.parse(localStorage.getItem(key)) || [];
     } catch (error) {
-        console.error('初始化用户失败:', error);
-        // 降级到本地存储
-        currentUserId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('userId', currentUserId);
+        console.error('读取本地数据失败:', error);
+        return [];
     }
+}
+
+function setStorageData(key, data) {
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+        return true;
+    } catch (error) {
+        console.error('保存本地数据失败:', error);
+        return false;
+    }
+}
+
+// 生成唯一ID
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
 // 滑动条事件
@@ -604,139 +585,118 @@ document.getElementById('score').oninput = function() {
 };
 
 // 提交心情
-async function submitMood() {
+function submitMood() {
     const score = Number(document.getElementById('score').value);
     const text = document.getElementById('moodText').value.trim() || '无具体描述';
     const isPublic = document.getElementById('isPublic').checked;
     
-    if (!currentUserId) {
-        await initializeUser();
-    }
+    // 创建心情记录
+    const mood = {
+        id: generateId(),
+        userId: currentUserId,
+        score: score,
+        text: text,
+        isPublic: isPublic,
+        createdAt: new Date().toISOString(),
+        likeCount: 0,
+        commentCount: 0
+    };
     
-    try {
-        const response = await fetch(`${API_BASE}/moods`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: currentUserId,
-                score: score,
-                text: text,
-                isPublic: isPublic
-            })
-        });
+    // 保存到本地存储
+    const moods = getStorageData(STORAGE_KEYS.MOODS);
+    moods.unshift(mood); // 添加到开头
+    
+    if (setStorageData(STORAGE_KEYS.MOODS, moods)) {
+        showMessage('✅ 心情记录成功！感谢您的分享。', 'success');
+        document.getElementById('moodText').value = '';
         
-        if (response.ok) {
-            showMessage('✅ 心情记录成功！感谢您的分享。', 'success');
-            document.getElementById('moodText').value = '';
-            
-            // 刷新数据
-            await loadStats();
-            await loadCommunityMoods(true);
-            await loadPersonalMoods();
-        } else {
-            throw new Error('提交失败');
-        }
-    } catch (error) {
-        console.error('提交心情失败:', error);
-        showMessage('❌ 提交失败，请稍后重试', 'error');
+        // 刷新数据
+        loadStats();
+        loadCommunityMoods();
+        loadPersonalMoods();
+    } else {
+        showMessage('❌ 保存失败，请稍后重试', 'error');
     }
 }
 
 // 加载统计数据
-async function loadStats() {
-    try {
-        const response = await fetch(`${API_BASE}/stats`);
-        const stats = await response.json();
-        
-        document.getElementById('total').textContent = stats.totalMoods || 0;
-        document.getElementById('publicMoods').textContent = stats.publicMoods || 0;
-        document.getElementById('average').textContent = (stats.avgScore || 0).toFixed(1);
-        document.getElementById('totalLikes').textContent = stats.totalLikes || 0;
-        document.getElementById('totalComments').textContent = stats.totalComments || 0;
-    } catch (error) {
-        console.error('加载统计数据失败:', error);
-    }
+function loadStats() {
+    const moods = getStorageData(STORAGE_KEYS.MOODS);
+    const likes = getStorageData(STORAGE_KEYS.LIKES);
+    const comments = getStorageData(STORAGE_KEYS.COMMENTS);
+    
+    const publicMoods = moods.filter(mood => mood.isPublic);
+    const totalScore = moods.reduce((sum, mood) => sum + mood.score, 0);
+    const avgScore = moods.length > 0 ? (totalScore / moods.length) : 0;
+    
+    document.getElementById('total').textContent = moods.length;
+    document.getElementById('publicMoods').textContent = publicMoods.length;
+    document.getElementById('average').textContent = avgScore.toFixed(1);
+    document.getElementById('totalLikes').textContent = likes.length;
+    document.getElementById('totalComments').textContent = comments.length;
 }
 
 // 加载社区心情
-async function loadCommunityMoods(reset = false) {
-    if (isLoading) return;
+function loadCommunityMoods() {
+    const moods = getStorageData(STORAGE_KEYS.MOODS);
+    const publicMoods = moods.filter(mood => mood.isPublic)
+                            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
-    if (reset) {
-        currentPage = 1;
-        hasMoreData = true;
-        document.getElementById('communityMoods').innerHTML = '';
+    const container = document.getElementById('communityMoods');
+    
+    if (publicMoods.length === 0) {
+        container.innerHTML = '<p class="loading">暂无公开分享，成为第一个分享心情的人吧！</p>';
+        document.getElementById('loadMoreBtn').style.display = 'none';
+        return;
     }
     
-    if (!hasMoreData) return;
+    // 分页显示
+    const startIndex = 0;
+    const endIndex = currentPage * moodsPerPage;
+    const displayMoods = publicMoods.slice(startIndex, endIndex);
     
-    isLoading = true;
+    renderMoods(displayMoods, 'communityMoods', false);
     
-    try {
-        const response = await fetch(`${API_BASE}/moods/public?page=${currentPage}&limit=10`);
-        const moods = await response.json();
-        
-        if (moods.length === 0) {
-            hasMoreData = false;
-            if (currentPage === 1) {
-                document.getElementById('communityMoods').innerHTML = '<p class="loading">暂无公开分享，成为第一个分享心情的人吧！</p>';
-            }
-        } else {
-            await renderMoods(moods, 'communityMoods', reset);
-            currentPage++;
-            
-            if (moods.length < 10) {
-                hasMoreData = false;
-            }
-        }
-        
-        document.getElementById('loadMoreBtn').style.display = hasMoreData ? 'block' : 'none';
-    } catch (error) {
-        console.error('加载社区心情失败:', error);
-        showMessage('❌ 加载失败，请稍后重试', 'error');
-    }
-    
-    isLoading = false;
+    // 显示/隐藏加载更多按钮
+    const hasMore = endIndex < publicMoods.length;
+    document.getElementById('loadMoreBtn').style.display = hasMore ? 'block' : 'none';
 }
 
 // 加载个人心情
-async function loadPersonalMoods() {
-    try {
-        const response = await fetch(`${API_BASE}/moods/user/${currentUserId}`);
-        const moods = await response.json();
-        
-        if (moods.length === 0) {
-            document.getElementById('personalMoods').innerHTML = '<p class="loading">您还没有记录过心情，快来记录第一条吧！</p>';
-        } else {
-            await renderMoods(moods, 'personalMoods', true, true);
-        }
-    } catch (error) {
-        console.error('加载个人心情失败:', error);
+function loadPersonalMoods() {
+    const moods = getStorageData(STORAGE_KEYS.MOODS);
+    const personalMoods = moods.filter(mood => mood.userId === currentUserId)
+                              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    const container = document.getElementById('personalMoods');
+    
+    if (personalMoods.length === 0) {
+        container.innerHTML = '<p class="loading">您还没有记录过心情，快来记录第一条吧！</p>';
+        return;
     }
+    
+    renderMoods(personalMoods, 'personalMoods', true);
 }
 
 // 渲染心情卡片
-async function renderMoods(moods, containerId, reset = false, showPrivacy = false) {
+function renderMoods(moods, containerId, showPrivacy = false) {
     const container = document.getElementById(containerId);
+    container.innerHTML = '';
     
-    if (reset) {
-        container.innerHTML = '';
-    }
-    
-    for (const mood of moods) {
+    moods.forEach(mood => {
         const moodCard = document.createElement('div');
         moodCard.className = 'mood-card';
-        moodCard.innerHTML = await generateMoodCardHTML(mood, showPrivacy);
+        moodCard.innerHTML = generateMoodCardHTML(mood, showPrivacy);
         container.appendChild(moodCard);
-    }
+    });
 }
 
 // 生成心情卡片HTML
-async function generateMoodCardHTML(mood, showPrivacy = false) {
-    const isLiked = await checkLikeStatus(mood.id);
+function generateMoodCardHTML(mood, showPrivacy = false) {
+    const isLiked = checkLikeStatus(mood.id);
     const privacyIndicator = showPrivacy ? 
-        `<span class="privacy-indicator ${mood.is_public ? 'privacy-public' : 'privacy-private'}">
-            ${mood.is_public ? '🌍 公开' : '🔒 私密'}
+        `<span class="privacy-indicator ${mood.isPublic ? 'privacy-public' : 'privacy-private'}">
+            ${mood.isPublic ? '🌍 公开' : '🔒 私密'}
         </span>` : '';
     
     return `
@@ -744,22 +704,22 @@ async function generateMoodCardHTML(mood, showPrivacy = false) {
             <div class="mood-score">${mood.score}分</div>
             <div>
                 ${privacyIndicator}
-                <div class="mood-time">${new Date(mood.created_at).toLocaleString('zh-CN')}</div>
+                <div class="mood-time">${new Date(mood.createdAt).toLocaleString('zh-CN')}</div>
             </div>
         </div>
         <div class="mood-content">${mood.text}</div>
         <div class="mood-actions">
             <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${mood.id}', this)">
                 <span>${isLiked ? '❤️' : '🤍'}</span>
-                <span>${mood.like_count || 0}</span>
+                <span>${mood.likeCount || 0}</span>
             </button>
             <button class="action-btn comment-btn" onclick="toggleComments('${mood.id}')">
                 <span>💬</span>
-                <span>${mood.comment_count || 0}</span>
+                <span>${mood.commentCount || 0}</span>
             </button>
-            ${showPrivacy ? `<button class="action-btn" onclick="togglePrivacy('${mood.id}', ${mood.is_public})">
-                <span>${mood.is_public ? '🔒' : '🌍'}</span>
-                <span>${mood.is_public ? '设为私密' : '设为公开'}</span>
+            ${showPrivacy ? `<button class="action-btn" onclick="togglePrivacy('${mood.id}', ${mood.isPublic})">
+                <span>${mood.isPublic ? '🔒' : '🌍'}</span>
+                <span>${mood.isPublic ? '设为私密' : '设为公开'}</span>
             </button>` : ''}
         </div>
         <div class="comments-section" id="comments-${mood.id}">
@@ -773,79 +733,84 @@ async function generateMoodCardHTML(mood, showPrivacy = false) {
 }
 
 // 检查点赞状态
-async function checkLikeStatus(moodId) {
-    try {
-        const response = await fetch(`${API_BASE}/moods/${moodId}/like-status/${currentUserId}`);
-        const data = await response.json();
-        return data.liked;
-    } catch (error) {
-        return false;
-    }
+function checkLikeStatus(moodId) {
+    const likes = getStorageData(STORAGE_KEYS.LIKES);
+    return likes.some(like => like.moodId === moodId && like.userId === currentUserId);
 }
 
 // 切换点赞
-async function toggleLike(moodId, button) {
-    try {
-        const response = await fetch(`${API_BASE}/moods/${moodId}/like`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUserId })
+function toggleLike(moodId, button) {
+    const likes = getStorageData(STORAGE_KEYS.LIKES);
+    const moods = getStorageData(STORAGE_KEYS.MOODS);
+    
+    const existingLikeIndex = likes.findIndex(like => 
+        like.moodId === moodId && like.userId === currentUserId
+    );
+    
+    const moodIndex = moods.findIndex(mood => mood.id === moodId);
+    if (moodIndex === -1) return;
+    
+    if (existingLikeIndex >= 0) {
+        // 取消点赞
+        likes.splice(existingLikeIndex, 1);
+        moods[moodIndex].likeCount = Math.max(0, (moods[moodIndex].likeCount || 0) - 1);
+        
+        button.classList.remove('liked');
+        button.querySelector('span:first-child').textContent = '🤍';
+    } else {
+        // 添加点赞
+        likes.push({
+            id: generateId(),
+            moodId: moodId,
+            userId: currentUserId,
+            createdAt: new Date().toISOString()
         });
+        moods[moodIndex].likeCount = (moods[moodIndex].likeCount || 0) + 1;
         
-        const data = await response.json();
-        
-        if (data.liked) {
-            button.classList.add('liked');
-            button.querySelector('span:first-child').textContent = '❤️';
-        } else {
-            button.classList.remove('liked');
-            button.querySelector('span:first-child').textContent = '🤍';
-        }
-        
-        // 更新点赞数
-        const currentCount = parseInt(button.querySelector('span:last-child').textContent);
-        button.querySelector('span:last-child').textContent = data.liked ? currentCount + 1 : currentCount - 1;
-        
-    } catch (error) {
-        console.error('点赞操作失败:', error);
-        showMessage('❌ 操作失败，请稍后重试', 'error');
+        button.classList.add('liked');
+        button.querySelector('span:first-child').textContent = '❤️';
     }
+    
+    // 更新显示的点赞数
+    button.querySelector('span:last-child').textContent = moods[moodIndex].likeCount;
+    
+    // 保存数据
+    setStorageData(STORAGE_KEYS.LIKES, likes);
+    setStorageData(STORAGE_KEYS.MOODS, moods);
+    loadStats();
 }
 
 // 切换评论区显示
-async function toggleComments(moodId) {
+function toggleComments(moodId) {
     const commentsSection = document.getElementById(`comments-${moodId}`);
     
     if (commentsSection.classList.contains('show')) {
         commentsSection.classList.remove('show');
     } else {
         commentsSection.classList.add('show');
-        await loadComments(moodId);
+        loadComments(moodId);
     }
 }
 
 // 加载评论
-async function loadComments(moodId) {
-    try {
-        const response = await fetch(`${API_BASE}/moods/${moodId}/comments`);
-        const comments = await response.json();
-        
-        const commentsList = document.getElementById(`comments-list-${moodId}`);
-        commentsList.innerHTML = comments.map(comment => `
-            <div class="comment-item">
-                <div>${comment.content}</div>
-                <small style="color: #666; margin-top: 5px; display: block;">
-                    ${new Date(comment.created_at).toLocaleString('zh-CN')}
-                </small>
-            </div>
-        `).join('');
-    } catch (error) {
-        console.error('加载评论失败:', error);
-    }
+function loadComments(moodId) {
+    const comments = getStorageData(STORAGE_KEYS.COMMENTS);
+    const moodComments = comments.filter(comment => comment.moodId === moodId)
+                                .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    
+    const commentsList = document.getElementById(`comments-list-${moodId}`);
+    commentsList.innerHTML = moodComments.map(comment => `
+        <div class="comment-item">
+            <div>${comment.content}</div>
+            <small style="color: #666; margin-top: 5px; display: block;">
+                ${new Date(comment.createdAt).toLocaleString('zh-CN')}
+            </small>
+        </div>
+    `).join('');
 }
 
 // 添加评论
-async function addComment(moodId, button) {
+function addComment(moodId, button) {
     const input = button.previousElementSibling;
     const content = input.value.trim();
     
@@ -854,51 +819,59 @@ async function addComment(moodId, button) {
         return;
     }
     
-    try {
-        const response = await fetch(`${API_BASE}/moods/${moodId}/comments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: currentUserId,
-                content: content
-            })
-        });
-        
-        if (response.ok) {
-            input.value = '';
-            await loadComments(moodId);
-            
-            // 更新评论数
-            const commentBtn = button.closest('.mood-card').querySelector('.comment-btn span:last-child');
-            const currentCount = parseInt(commentBtn.textContent);
-            commentBtn.textContent = currentCount + 1;
-        }
-    } catch (error) {
-        console.error('添加评论失败:', error);
-        showMessage('❌ 评论失败，请稍后重试', 'error');
+    const comments = getStorageData(STORAGE_KEYS.COMMENTS);
+    const moods = getStorageData(STORAGE_KEYS.MOODS);
+    
+    // 添加评论
+    const comment = {
+        id: generateId(),
+        moodId: moodId,
+        userId: currentUserId,
+        content: content,
+        createdAt: new Date().toISOString()
+    };
+    
+    comments.push(comment);
+    
+    // 更新心情的评论数
+    const moodIndex = moods.findIndex(mood => mood.id === moodId);
+    if (moodIndex >= 0) {
+        moods[moodIndex].commentCount = (moods[moodIndex].commentCount || 0) + 1;
     }
+    
+    // 保存数据
+    setStorageData(STORAGE_KEYS.COMMENTS, comments);
+    setStorageData(STORAGE_KEYS.MOODS, moods);
+    
+    // 清空输入框并重新加载评论
+    input.value = '';
+    loadComments(moodId);
+    
+    // 更新评论数显示
+    const commentBtn = button.closest('.mood-card').querySelector('.comment-btn span:last-child');
+    if (commentBtn && moodIndex >= 0) {
+        commentBtn.textContent = moods[moodIndex].commentCount;
+    }
+    
+    loadStats();
 }
 
 // 切换隐私设置
-async function togglePrivacy(moodId, currentIsPublic) {
-    try {
-        const response = await fetch(`${API_BASE}/moods/${moodId}/privacy`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: currentUserId,
-                isPublic: !currentIsPublic
-            })
-        });
+function togglePrivacy(moodId, currentIsPublic) {
+    const moods = getStorageData(STORAGE_KEYS.MOODS);
+    const moodIndex = moods.findIndex(mood => mood.id === moodId && mood.userId === currentUserId);
+    
+    if (moodIndex >= 0) {
+        moods[moodIndex].isPublic = !currentIsPublic;
         
-        if (response.ok) {
+        if (setStorageData(STORAGE_KEYS.MOODS, moods)) {
             showMessage('✅ 隐私设置已更新', 'success');
-            await loadPersonalMoods();
-            await loadCommunityMoods(true);
+            loadPersonalMoods();
+            loadCommunityMoods();
+            loadStats();
+        } else {
+            showMessage('❌ 更新失败，请稍后重试', 'error');
         }
-    } catch (error) {
-        console.error('更新隐私设置失败:', error);
-        showMessage('❌ 更新失败，请稍后重试', 'error');
     }
 }
 
@@ -912,9 +885,12 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     document.getElementById(tabName + 'Tab').classList.add('active');
     
+    // 重置分页
+    currentPage = 1;
+    
     // 加载对应数据
     if (tabName === 'community') {
-        loadCommunityMoods(true);
+        loadCommunityMoods();
     } else if (tabName === 'personal') {
         loadPersonalMoods();
     }
@@ -922,30 +898,65 @@ function switchTab(tabName) {
 
 // 加载更多心情
 function loadMoreMoods() {
-    loadCommunityMoods(false);
+    currentPage++;
+    loadCommunityMoods();
 }
 
 // 清空个人历史
 function clearPersonalHistory() {
     if (confirm('确定要清空您的个人心情历史吗？此操作不可恢复！')) {
-        // 这里可以调用API删除个人数据
+        const moods = getStorageData(STORAGE_KEYS.MOODS);
+        const likes = getStorageData(STORAGE_KEYS.LIKES);
+        const comments = getStorageData(STORAGE_KEYS.COMMENTS);
+        
+        // 删除个人心情记录
+        const filteredMoods = moods.filter(mood => mood.userId !== currentUserId);
+        
+        // 删除个人点赞记录
+        const filteredLikes = likes.filter(like => like.userId !== currentUserId);
+        
+        // 删除个人评论记录
+        const filteredComments = comments.filter(comment => comment.userId !== currentUserId);
+        
+        // 保存更新后的数据
+        setStorageData(STORAGE_KEYS.MOODS, filteredMoods);
+        setStorageData(STORAGE_KEYS.LIKES, filteredLikes);
+        setStorageData(STORAGE_KEYS.COMMENTS, filteredComments);
+        
         showMessage('✅ 个人历史已清空', 'success');
         loadPersonalMoods();
+        loadCommunityMoods();
+        loadStats();
     }
 }
 
 // 导出数据
-async function exportData() {
+function exportData() {
+    const moods = getStorageData(STORAGE_KEYS.MOODS);
+    const likes = getStorageData(STORAGE_KEYS.LIKES);
+    const comments = getStorageData(STORAGE_KEYS.COMMENTS);
+    
+    // 筛选个人数据
+    const personalMoods = moods.filter(mood => mood.userId === currentUserId);
+    const personalLikes = likes.filter(like => like.userId === currentUserId);
+    const personalComments = comments.filter(comment => comment.userId === currentUserId);
+    
+    const exportData = {
+        userId: currentUserId,
+        exportTime: new Date().toISOString(),
+        moods: personalMoods,
+        likes: personalLikes,
+        comments: personalComments,
+        stats: {
+            totalMoods: personalMoods.length,
+            publicMoods: personalMoods.filter(mood => mood.isPublic).length,
+            privateMoods: personalMoods.filter(mood => !mood.isPublic).length,
+            totalLikes: personalLikes.length,
+            totalComments: personalComments.length
+        }
+    };
+    
     try {
-        const response = await fetch(`${API_BASE}/moods/user/${currentUserId}`);
-        const data = await response.json();
-        
-        const exportData = {
-            userId: currentUserId,
-            exportTime: new Date().toISOString(),
-            moods: data
-        };
-        
         const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -970,18 +981,20 @@ function showMessage(message, type) {
     messageArea.appendChild(messageDiv);
     
     setTimeout(() => {
-        messageDiv.remove();
+        if (messageDiv.parentNode) {
+            messageDiv.remove();
+        }
     }, 5000);
 }
 
 // 页面加载时初始化
-window.onload = async function() {
+window.onload = function() {
     // 初始化滑动条颜色
     document.getElementById('score').oninput();
     
     // 加载数据
-    await loadStats();
-    await loadCommunityMoods(true);
+    loadStats();
+    loadCommunityMoods();
 };
 </script>
 </body>
