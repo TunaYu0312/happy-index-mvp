@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>开心指数社区 - 匿名心情分享平台</title>
+<style>
+    * { box-sizing: border-box; }
+    body { 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        max-width: 800px; 
+        margin: 0 auto; 
+        padding: 20px; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        line-height: 1.6;
+    }
+    
+    .container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+    }
+    
+    h1 { 
+        text-align: center; 
+        color: #333;
+        margin-bottom: 40px;
+        font-size: 2.2em;
+        font-weight: 300;
+    }
+    
+    .mood-section {
+        margin-bottom: 40px;
+        padding: 25px;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border: 2px solid #e9ecef;
+    }
+    
+    .slider-container {
+        margin: 30px 0;
+        position: relative;
+    }
+    
+    .slider-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    
+    .label-left {
+        color: #2196F3;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .label-right {
+        color: #FF4444;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .slider {
+        width: 100%;
+        height: 12px;
+        border-radius: 6px;
+        background: linear-gradient(to right, #2196F3 0%, #4CAF50 50%, #FF4444 100%);
+        outline: none;
+        -webkit-appearance: none;
+        margin: 20px 0;
+    }
+    
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid #333;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .slider::-webkit-slider-thumb:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+    
+    .slider::-moz-range-thumb {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid #333;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .score-display {
+        text-align: center;
+        font-size: 2em;
+        font-weight: bold;
+        margin: 20px 0;
+        padding: 15px;
+        background: white;
+        border-radius: 10px;
+        border: 2px solid #ddd;
+    }
+    
+    textarea { 
+        width: 100%; 
+        height: 100px; 
+        margin-top: 15px;
+        padding: 15px;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        font-size: 16px;
+        resize: vertical;
+        font-family: inherit;
+    }
+    
+    textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    button { 
+        display: block; 
+        margin: 25px auto; 
+        padding: 15px 30px; 
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white; 
+        border: none; 
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .stats { 
+        background: white; 
+        padding: 25px; 
+        margin-top: 30px; 
+        border-radius: 15px;
+        border: 2px solid #e9ecef;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    
+    .stats h3 {
+        margin-top: 0;
+        color: #333;
+        border-bottom: 2px solid #667eea;
+        padding-bottom: 10px;
+    }
+    
+    .stats p {
+        margin: 15px 0;
+        font-size: 16px;
+    }
+    
+    .mood-list { 
+        margin-top: 20px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .mood-item {
+        background: #f8f9fa;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 10px;
+        border-left: 4px solid #667eea;
+    }
+    
+    .history-section {
+        margin-top: 30px;
+        padding: 25px;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border: 2px solid #e9ecef;
+    }
+    
+    .history-item {
+        background: white;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 10px;
+        border-left: 4px solid #28a745;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .clear-btn {
+        background: #dc3545;
+        padding: 8px 16px;
+        font-size: 14px;
+        margin: 10px 5px;
+    }
+    
+    .privacy-toggle {
+        margin: 15px 0;
+        padding: 15px;
+        background: #e3f2fd;
+        border-radius: 10px;
+        border: 2px solid #2196F3;
+    }
+    
+    .privacy-toggle label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    
+    .privacy-toggle input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+    
+    .community-section {
+        margin-top: 30px;
+        padding: 25px;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border: 2px solid #e9ecef;
+    }
+    
+    .mood-card {
+        background: white;
+        padding: 20px;
+        margin: 15px 0;
+        border-radius: 15px;
+        border-left: 4px solid #667eea;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+    
+    .mood-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .mood-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .mood-score {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    .mood-time {
+        color: #666;
+        font-size: 0.9em;
+    }
+    
+    .mood-content {
+        margin: 15px 0;
+        line-height: 1.6;
+        color: #333;
+    }
+    
+    .mood-actions {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+    }
+    
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+        color: #666;
+    }
+    
+    .action-btn:hover {
+        background: #e9ecef;
+        transform: translateY(-1px);
+    }
+    
+    .action-btn.liked {
+        background: #ff4757;
+        color: white;
+    }
+    
+    .action-btn.comment-btn {
+        background: #3742fa;
+        color: white;
+    }
+    
+    .comments-section {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+        display: none;
+    }
+    
+    .comments-section.show {
+        display: block;
+    }
+    
+    .comment-item {
+        background: #f8f9fa;
+        padding: 10px 15px;
+        margin: 8px 0;
+        border-radius: 8px;
+        border-left: 3px solid #667eea;
+    }
+    
+    .comment-form {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    
+    .comment-input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        outline: none;
+    }
+    
+    .comment-submit {
+        padding: 8px 16px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+    }
+    
+    .error {
+        background: #ffebee;
+        color: #c62828;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+        border-left: 4px solid #c62828;
+    }
+    
+    .success {
+        background: #e8f5e8;
+        color: #2e7d32;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+        border-left: 4px solid #2e7d32;
+    }
+    
+    .tab-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #eee;
+    }
+    
+    .tab-btn {
+        padding: 12px 24px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        color: #666;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .tab-btn.active {
+        color: #667eea;
+        border-bottom-color: #667eea;
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .privacy-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .privacy-public {
+        background: #e8f5e8;
+        color: #2e7d32;
+    }
+    
+    .privacy-private {
+        background: #fff3e0;
+        color: #f57c00;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        
+        .container {
+            padding: 20px;
+        }
+        
+        h1 {
+            font-size: 1.8em;
+        }
+        
+        .mood-section, .stats, .history-section {
+            padding: 20px;
+        }
+        
+        .score-display {
+            font-size: 1.5em;
+        }
+        
+        .history-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .container {
+            padding: 15px;
+        }
+        
+        .mood-section, .stats, .history-section {
+            padding: 15px;
+        }
+        
+        .slider-labels {
+            font-size: 14px;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>😊 今日开心指数测评</h1>
+    
+    <div class="mood-section">
+        <div class="slider-container">
+            <div class="slider-labels">
+                <div class="label-left">
+                    <span>😢</span>
+                    <span>0分 - 心情抑郁</span>
+                </div>
+                <div class="label-right">
+                    <span>😄</span>
+                    <span>10分 - 非常开心</span>
+                </div>
+            </div>
+            <input type="range" min="0" max="10" value="6" class="slider" id="score">
+            <div class="score-display">
+                当前分数：<span id="scoreValue">6</span> 分
+            </div>
+        </div>
+        
+        <textarea id="moodText" placeholder="描述一下你的心情和感受（可选，100字以内）"></textarea>
+        
+        <div class="privacy-toggle">
+            <label>
+                <input type="checkbox" id="isPublic" checked>
+                <span>🌍 公开分享（其他用户可以看到并互动）</span>
+            </label>
+            <small style="color: #666; margin-top: 5px; display: block;">取消勾选则仅自己可见</small>
+        </div>
+        
+        <button onclick="submitMood()">💾 记录我的心情</button>
+    </div>
+
+    <div class="stats">
+        <h3>📊 社区统计数据</h3>
+        <div id="statsContent">
+            <p>📈 总记录数：<span id="total">0</span></p>
+            <p>👥 公开分享：<span id="publicMoods">0</span></p>
+            <p>📊 社区平均分：<span id="average">0.0</span></p>
+            <p>👍 总点赞数：<span id="totalLikes">0</span></p>
+            <p>💬 总评论数：<span id="totalComments">0</span></p>
+        </div>
+    </div>
+    
+    <div class="community-section">
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="switchTab('community')">🌍 社区动态</button>
+            <button class="tab-btn" onclick="switchTab('personal')">📝 我的记录</button>
+        </div>
+        
+        <div id="communityTab" class="tab-content active">
+            <div id="communityMoods"></div>
+            <button id="loadMoreBtn" onclick="loadMoreMoods()" style="display: none;">加载更多</button>
+        </div>
+        
+        <div id="personalTab" class="tab-content">
+            <div id="personalMoods"></div>
+        </div>
+    </div>
+    
+    <div class="history-section">
+        <h3>⚙️ 数据管理</h3>
+        <p>管理您的数据和隐私设置：</p>
+        <button class="clear-btn" onclick="clearPersonalHistory()">🗑️ 清空个人历史</button>
+        <button class="clear-btn" onclick="exportData()">📤 导出数据</button>
+        <div id="messageArea"></div>
+    </div>
+</div>
+
+<script>
+// 配置
+const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api';
+
+// 全局变量
+let currentUserId = localStorage.getItem('userId');
+let currentPage = 1;
+let isLoading = false;
+let hasMoreData = true;
+
+// 初始化用户ID
+if (!currentUserId) {
+    initializeUser();
+}
+
+// 初始化用户
+async function initializeUser() {
+    try {
+        const response = await fetch(`${API_BASE}/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        currentUserId = data.userId;
+        localStorage.setItem('userId', currentUserId);
+    } catch (error) {
+        console.error('初始化用户失败:', error);
+        // 降级到本地存储
+        currentUserId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('userId', currentUserId);
+    }
+}
+
+// 滑动条事件
+document.getElementById('score').oninput = function() {
+    const value = this.value;
+    document.getElementById('scoreValue').textContent = value;
+    
+    // 根据分数动态改变滑块颜色
+    const percentage = (value / 10) * 100;
+    if (value <= 3) {
+        this.style.background = `linear-gradient(to right, #2196F3 0%, #2196F3 ${percentage}%, #ddd ${percentage}%, #ddd 100%)`;
+    } else if (value <= 7) {
+        this.style.background = `linear-gradient(to right, #2196F3 0%, #4CAF50 ${percentage}%, #ddd ${percentage}%, #ddd 100%)`;
+    } else {
+        this.style.background = `linear-gradient(to right, #2196F3 0%, #4CAF50 50%, #FF4444 ${percentage}%, #ddd ${percentage}%, #ddd 100%)`;
+    }
+};
+
+// 提交心情
+async function submitMood() {
+    const score = Number(document.getElementById('score').value);
+    const text = document.getElementById('moodText').value.trim() || '无具体描述';
+    const isPublic = document.getElementById('isPublic').checked;
+    
+    if (!currentUserId) {
+        await initializeUser();
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/moods`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: currentUserId,
+                score: score,
+                text: text,
+                isPublic: isPublic
+            })
+        });
+        
+        if (response.ok) {
+            showMessage('✅ 心情记录成功！感谢您的分享。', 'success');
+            document.getElementById('moodText').value = '';
+            
+            // 刷新数据
+            await loadStats();
+            await loadCommunityMoods(true);
+            await loadPersonalMoods();
+        } else {
+            throw new Error('提交失败');
+        }
+    } catch (error) {
+        console.error('提交心情失败:', error);
+        showMessage('❌ 提交失败，请稍后重试', 'error');
+    }
+}
+
+// 加载统计数据
+async function loadStats() {
+    try {
+        const response = await fetch(`${API_BASE}/stats`);
+        const stats = await response.json();
+        
+        document.getElementById('total').textContent = stats.totalMoods || 0;
+        document.getElementById('publicMoods').textContent = stats.publicMoods || 0;
+        document.getElementById('average').textContent = (stats.avgScore || 0).toFixed(1);
+        document.getElementById('totalLikes').textContent = stats.totalLikes || 0;
+        document.getElementById('totalComments').textContent = stats.totalComments || 0;
+    } catch (error) {
+        console.error('加载统计数据失败:', error);
+    }
+}
+
+// 加载社区心情
+async function loadCommunityMoods(reset = false) {
+    if (isLoading) return;
+    
+    if (reset) {
+        currentPage = 1;
+        hasMoreData = true;
+        document.getElementById('communityMoods').innerHTML = '';
+    }
+    
+    if (!hasMoreData) return;
+    
+    isLoading = true;
+    
+    try {
+        const response = await fetch(`${API_BASE}/moods/public?page=${currentPage}&limit=10`);
+        const moods = await response.json();
+        
+        if (moods.length === 0) {
+            hasMoreData = false;
+            if (currentPage === 1) {
+                document.getElementById('communityMoods').innerHTML = '<p class="loading">暂无公开分享，成为第一个分享心情的人吧！</p>';
+            }
+        } else {
+            await renderMoods(moods, 'communityMoods', reset);
+            currentPage++;
+            
+            if (moods.length < 10) {
+                hasMoreData = false;
+            }
+        }
+        
+        document.getElementById('loadMoreBtn').style.display = hasMoreData ? 'block' : 'none';
+    } catch (error) {
+        console.error('加载社区心情失败:', error);
+        showMessage('❌ 加载失败，请稍后重试', 'error');
+    }
+    
+    isLoading = false;
+}
+
+// 加载个人心情
+async function loadPersonalMoods() {
+    try {
+        const response = await fetch(`${API_BASE}/moods/user/${currentUserId}`);
+        const moods = await response.json();
+        
+        if (moods.length === 0) {
+            document.getElementById('personalMoods').innerHTML = '<p class="loading">您还没有记录过心情，快来记录第一条吧！</p>';
+        } else {
+            await renderMoods(moods, 'personalMoods', true, true);
+        }
+    } catch (error) {
+        console.error('加载个人心情失败:', error);
+    }
+}
+
+// 渲染心情卡片
+async function renderMoods(moods, containerId, reset = false, showPrivacy = false) {
+    const container = document.getElementById(containerId);
+    
+    if (reset) {
+        container.innerHTML = '';
+    }
+    
+    for (const mood of moods) {
+        const moodCard = document.createElement('div');
+        moodCard.className = 'mood-card';
+        moodCard.innerHTML = await generateMoodCardHTML(mood, showPrivacy);
+        container.appendChild(moodCard);
+    }
+}
+
+// 生成心情卡片HTML
+async function generateMoodCardHTML(mood, showPrivacy = false) {
+    const isLiked = await checkLikeStatus(mood.id);
+    const privacyIndicator = showPrivacy ? 
+        `<span class="privacy-indicator ${mood.is_public ? 'privacy-public' : 'privacy-private'}">
+            ${mood.is_public ? '🌍 公开' : '🔒 私密'}
+        </span>` : '';
+    
+    return `
+        <div class="mood-header">
+            <div class="mood-score">${mood.score}分</div>
+            <div>
+                ${privacyIndicator}
+                <div class="mood-time">${new Date(mood.created_at).toLocaleString('zh-CN')}</div>
+            </div>
+        </div>
+        <div class="mood-content">${mood.text}</div>
+        <div class="mood-actions">
+            <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${mood.id}', this)">
+                <span>${isLiked ? '❤️' : '🤍'}</span>
+                <span>${mood.like_count || 0}</span>
+            </button>
+            <button class="action-btn comment-btn" onclick="toggleComments('${mood.id}')">
+                <span>💬</span>
+                <span>${mood.comment_count || 0}</span>
+            </button>
+            ${showPrivacy ? `<button class="action-btn" onclick="togglePrivacy('${mood.id}', ${mood.is_public})">
+                <span>${mood.is_public ? '🔒' : '🌍'}</span>
+                <span>${mood.is_public ? '设为私密' : '设为公开'}</span>
+            </button>` : ''}
+        </div>
+        <div class="comments-section" id="comments-${mood.id}">
+            <div class="comment-form">
+                <input type="text" class="comment-input" placeholder="写下你的评论..." maxlength="200">
+                <button class="comment-submit" onclick="addComment('${mood.id}', this)">发送</button>
+            </div>
+            <div class="comments-list" id="comments-list-${mood.id}"></div>
+        </div>
+    `;
+}
+
+// 检查点赞状态
+async function checkLikeStatus(moodId) {
+    try {
+        const response = await fetch(`${API_BASE}/moods/${moodId}/like-status/${currentUserId}`);
+        const data = await response.json();
+        return data.liked;
+    } catch (error) {
+        return false;
+    }
+}
+
+// 切换点赞
+async function toggleLike(moodId, button) {
+    try {
+        const response = await fetch(`${API_BASE}/moods/${moodId}/like`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUserId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.liked) {
+            button.classList.add('liked');
+            button.querySelector('span:first-child').textContent = '❤️';
+        } else {
+            button.classList.remove('liked');
+            button.querySelector('span:first-child').textContent = '🤍';
+        }
+        
+        // 更新点赞数
+        const currentCount = parseInt(button.querySelector('span:last-child').textContent);
+        button.querySelector('span:last-child').textContent = data.liked ? currentCount + 1 : currentCount - 1;
+        
+    } catch (error) {
+        console.error('点赞操作失败:', error);
+        showMessage('❌ 操作失败，请稍后重试', 'error');
+    }
+}
+
+// 切换评论区显示
+async function toggleComments(moodId) {
+    const commentsSection = document.getElementById(`comments-${moodId}`);
+    
+    if (commentsSection.classList.contains('show')) {
+        commentsSection.classList.remove('show');
+    } else {
+        commentsSection.classList.add('show');
+        await loadComments(moodId);
+    }
+}
+
+// 加载评论
+async function loadComments(moodId) {
+    try {
+        const response = await fetch(`${API_BASE}/moods/${moodId}/comments`);
+        const comments = await response.json();
+        
+        const commentsList = document.getElementById(`comments-list-${moodId}`);
+        commentsList.innerHTML = comments.map(comment => `
+            <div class="comment-item">
+                <div>${comment.content}</div>
+                <small style="color: #666; margin-top: 5px; display: block;">
+                    ${new Date(comment.created_at).toLocaleString('zh-CN')}
+                </small>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('加载评论失败:', error);
+    }
+}
+
+// 添加评论
+async function addComment(moodId, button) {
+    const input = button.previousElementSibling;
+    const content = input.value.trim();
+    
+    if (!content) {
+        showMessage('❌ 请输入评论内容', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/moods/${moodId}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: currentUserId,
+                content: content
+            })
+        });
+        
+        if (response.ok) {
+            input.value = '';
+            await loadComments(moodId);
+            
+            // 更新评论数
+            const commentBtn = button.closest('.mood-card').querySelector('.comment-btn span:last-child');
+            const currentCount = parseInt(commentBtn.textContent);
+            commentBtn.textContent = currentCount + 1;
+        }
+    } catch (error) {
+        console.error('添加评论失败:', error);
+        showMessage('❌ 评论失败，请稍后重试', 'error');
+    }
+}
+
+// 切换隐私设置
+async function togglePrivacy(moodId, currentIsPublic) {
+    try {
+        const response = await fetch(`${API_BASE}/moods/${moodId}/privacy`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: currentUserId,
+                isPublic: !currentIsPublic
+            })
+        });
+        
+        if (response.ok) {
+            showMessage('✅ 隐私设置已更新', 'success');
+            await loadPersonalMoods();
+            await loadCommunityMoods(true);
+        }
+    } catch (error) {
+        console.error('更新隐私设置失败:', error);
+        showMessage('❌ 更新失败，请稍后重试', 'error');
+    }
+}
+
+// 切换标签页
+function switchTab(tabName) {
+    // 更新标签按钮状态
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // 更新内容显示
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(tabName + 'Tab').classList.add('active');
+    
+    // 加载对应数据
+    if (tabName === 'community') {
+        loadCommunityMoods(true);
+    } else if (tabName === 'personal') {
+        loadPersonalMoods();
+    }
+}
+
+// 加载更多心情
+function loadMoreMoods() {
+    loadCommunityMoods(false);
+}
+
+// 清空个人历史
+function clearPersonalHistory() {
+    if (confirm('确定要清空您的个人心情历史吗？此操作不可恢复！')) {
+        // 这里可以调用API删除个人数据
+        showMessage('✅ 个人历史已清空', 'success');
+        loadPersonalMoods();
+    }
+}
+
+// 导出数据
+async function exportData() {
+    try {
+        const response = await fetch(`${API_BASE}/moods/user/${currentUserId}`);
+        const data = await response.json();
+        
+        const exportData = {
+            userId: currentUserId,
+            exportTime: new Date().toISOString(),
+            moods: data
+        };
+        
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `mood-data-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        showMessage('✅ 数据导出成功', 'success');
+    } catch (error) {
+        console.error('导出数据失败:', error);
+        showMessage('❌ 导出失败，请稍后重试', 'error');
+    }
+}
+
+// 显示消息
+function showMessage(message, type) {
+    const messageArea = document.getElementById('messageArea');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = type;
+    messageDiv.textContent = message;
+    messageArea.appendChild(messageDiv);
+    
+    setTimeout(() => {
+        messageDiv.remove();
+    }, 5000);
+}
+
+// 页面加载时初始化
+window.onload = async function() {
+    // 初始化滑动条颜色
+    document.getElementById('score').oninput();
+    
+    // 加载数据
+    await loadStats();
+    await loadCommunityMoods(true);
+};
+</script>
+</body>
+</html>
