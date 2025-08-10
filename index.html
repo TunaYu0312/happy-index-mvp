@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>开心指数 MVP</title>
+<style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; background: #fff8e7; }
+    h1 { text-align: center; }
+    .slider { width: 100%; }
+    textarea { width: 100%; height: 80px; margin-top: 8px; }
+    button { display: block; margin: 15px auto; padding: 10px 20px; background: orange; color: white; border: none; cursor: pointer; }
+    .stats { background: white; padding: 10px; margin-top: 20px; border-radius: 6px; }
+    .mood-list { margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<h1>😊 今日开心指数（0~10）</h1>
+<input type="range" min="0" max="10" value="6" class="slider" id="score">
+<p>分数：<span id="scoreValue">6</span></p>
+
+<textarea id="moodText" placeholder="描述一下你的心情（100字以内）"></textarea>
+<button onclick="submitMood()">提交</button>
+
+<div class="stats">
+    <h3>📊 统计结果</h3>
+    <p>当前总提交人数：<span id="total">0</span></p>
+    <p>相似分数人数：<span id="similar">0</span></p>
+    <p>平均分：<span id="average">0.0</span></p>
+</div>
+
+<div class="mood-list" id="moodList"></div>
+
+<script>
+let moods = [];
+document.getElementById('score').oninput = function() {
+    document.getElementById('scoreValue').textContent = this.value;
+};
+
+function submitMood() {
+    const score = Number(document.getElementById('score').value);
+    const text = document.getElementById('moodText').value.trim();
+    if (!text) { alert('请填写心情描述'); return; }
+
+    moods.push({ score, text });
+    updateStats();
+    document.getElementById('moodText').value = '';
+}
+
+function updateStats() {
+    const total = moods.length;
+    const avg = (moods.reduce((sum, m) => sum + m.score, 0) / total).toFixed(1);
+    const latestScore = moods[moods.length - 1].score;
+    const similarCount = moods.filter(m => Math.abs(m.score - latestScore) <= 1).length;
+
+    document.getElementById('total').textContent = total;
+    document.getElementById('average').textContent = avg;
+    document.getElementById('similar').textContent = similarCount;
+
+    document.getElementById('moodList').innerHTML =
+        '<h3>相似分数的心情分享：</h3>' +
+        moods.filter(m => Math.abs(m.score - latestScore) <= 1)
+             .map(m => `<p>• ${m.text}</p>`)
+             .join('');
+}
+</script>
+</body>
+</html>
