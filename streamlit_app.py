@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
-import altair as alt
 import pandas as pd
 import psycopg2
 import psycopg2.extras
@@ -186,26 +185,8 @@ def render_trend_chart(entries: pd.DataFrame, days: int) -> None:
         st.info(f"最近 {days} 天暂无心情记录。")
         return
 
-    chart = (
-        alt.Chart(trend)
-        .mark_line(point=True)
-        .encode(
-            x=alt.X("entry_date:T", title="日期"),
-            y=alt.Y(
-                "average_mood_score:Q",
-                title="平均心情分",
-                scale=alt.Scale(domain=[1, 10]),
-            ),
-            tooltip=[
-                alt.Tooltip("entry_date:T", title="日期", format="%Y-%m-%d"),
-                alt.Tooltip(
-                    "average_mood_score:Q", title="平均心情分", format=".2f"
-                ),
-            ],
-        )
-        .properties(height=280)
-    )
-    st.altair_chart(chart, use_container_width=True)
+    chart_data = trend.set_index("entry_date")["average_mood_score"]
+    st.line_chart(chart_data, height=280, y_label="平均心情分")
 
 
 def render_label_distribution(entries: pd.DataFrame) -> None:
@@ -221,21 +202,8 @@ def render_label_distribution(entries: pd.DataFrame) -> None:
         .rename(columns={"size": "count"})
         .sort_values("count", ascending=False)
     )
-    chart = (
-        alt.Chart(distribution)
-        .mark_bar()
-        .encode(
-            x=alt.X("mood_label:N", title="心情标签", sort="-y"),
-            y=alt.Y("count:Q", title="记录数", allowDecimals=False),
-            color=alt.Color("mood_label:N", title="心情标签"),
-            tooltip=[
-                alt.Tooltip("mood_label:N", title="心情标签"),
-                alt.Tooltip("count:Q", title="记录数"),
-            ],
-        )
-        .properties(height=280)
-    )
-    st.altair_chart(chart, use_container_width=True)
+    chart_data = distribution.set_index("mood_label")["count"]
+    st.bar_chart(chart_data, height=280, y_label="记录数")
 
 
 def render_insights(entries: pd.DataFrame) -> None:

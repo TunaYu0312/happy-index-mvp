@@ -62,8 +62,9 @@ sslmode = "require"
 streamlit_app.py
 ```
 
-5. 在 Streamlit Cloud 的 app settings 中配置 Secrets，内容参考上面的 `[database]` 配置。
-6. 部署后打开应用。如果 Secrets 未配置或配置不完整，应用会以 demo 模式运行。
+5. 如果部署页提供 Python version 选项，建议选择 Python 3.12，避免部分第三方包在过新的 Python 版本下出现兼容问题。
+6. 在 Streamlit Cloud 的 app settings 中配置 Secrets，内容参考上面的 `[database]` 配置。
+7. 部署后打开应用。如果 Secrets 未配置或配置不完整，应用会以 demo 模式运行。
 
 ## 数据库表结构
 
