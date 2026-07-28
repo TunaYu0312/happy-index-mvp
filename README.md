@@ -1,6 +1,46 @@
 # Happy Index 心情指数
 
-一个可部署到 Streamlit Community Cloud 的心情记录 MVP。用户可以每天记录昵称、心情分数、心情标签和一句话备注，并查看最近记录、7 天/30 天趋势、心情标签分布和简单洞察。
+一个轻量、克制的每日心情记录应用。用约一分钟记录 1–10 分的主观心情、最接近的感受和一句话备注，再通过 7/30/90 天趋势温和地回看变化。
+
+> Happy Index 用于个人记录与反思，不进行心理诊断，也不能替代专业心理支持。
+
+## 这次升级解决了什么
+
+首版 MVP 已经具备数据库写入和基础图表，但交互更接近“表单 + 报表”。新版把使用路径收敛为：
+
+```text
+选择个人昵称
+→ 记录此刻
+→ 确认今天状态
+→ 查看趋势与温和提示
+→ 导出自己的记录
+```
+
+主要变化：
+
+- 重新设计响应式页面、视觉层级和移动端布局
+- 以“今天是否已记录”为核心状态，而不是先展示统计报表
+- Demo 模式支持本次浏览会话内真实提交，不再是无反馈表单
+- 数据库查询按昵称过滤，界面不再加载和展示所有人的记录
+- 增加连续记录天数、近 7 天相对前 7 天变化
+- 合并 7/30/90 天周期选择，减少重复标签页
+- 增加 CSV 导出
+- 对数据库错误使用安全提示，不向页面泄露连接细节
+- 把数据处理逻辑拆分到 `mood_logic.py`，并增加单元测试
+
+## 项目结构
+
+```text
+.
+├── .streamlit/
+│   └── config.toml
+├── tests/
+│   └── test_mood_logic.py
+├── mood_logic.py
+├── streamlit_app.py
+├── requirements.txt
+└── README.md
+```
 
 ## 本地运行
 
@@ -23,13 +63,19 @@ pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
 
-如果没有配置数据库，应用会自动进入 demo 模式，使用本地示例数据展示，并在页面明确标注为 demo 模式。demo 模式下提交不会写入持久化数据库。
+未配置数据库时，应用自动进入 Demo 模式。`demo_user` 会看到 30 天示例数据，任何昵称都可以在当前浏览会话中提交记录；这些新记录不会长期保存。
+
+## 运行测试
+
+```powershell
+python -m unittest discover -s tests -v
+```
 
 ## 配置 Streamlit Secrets
 
-本项目不在代码中保存数据库密码或 API key。数据库配置通过 Streamlit 的 `st.secrets` 读取。
+数据库配置通过 Streamlit 的 `st.secrets` 读取，不要把密码或 API Key 写进代码。
 
-本地开发时，可以创建 `.streamlit/secrets.toml`：
+本地开发时，创建 `.streamlit/secrets.toml`：
 
 ```toml
 [database]
@@ -49,29 +95,14 @@ password = "YOUR_PASSWORD"
 sslmode = "require"
 ```
 
-`.streamlit/secrets.toml` 已加入 `.gitignore`，不要提交到 GitHub。
-
-## 部署到 Streamlit Community Cloud
-
-1. 将本项目推送到 GitHub 仓库。
-2. 登录 [Streamlit Community Cloud](https://streamlit.io/cloud)。
-3. 选择 `New app`。
-4. 选择对应 GitHub 仓库、分支和入口文件：
-
-```text
-streamlit_app.py
-```
-
-5. 如果部署页提供 Python version 选项，建议选择 Python 3.12，避免部分第三方包在过新的 Python 版本下出现兼容问题。
-6. 在 Streamlit Cloud 的 app settings 中配置 Secrets，内容参考上面的 `[database]` 配置。
-7. 部署后打开应用。如果 Secrets 未配置或配置不完整，应用会以 demo 模式运行。
+`.streamlit/secrets.toml` 已加入 `.gitignore`。
 
 ## 数据库表结构
 
-优先支持 Supabase/PostgreSQL。可以在 Supabase SQL Editor 或 PostgreSQL 客户端执行：
+新版继续兼容首版 PostgreSQL/Supabase 表，不需要迁移：
 
 ```sql
-create table if not exists public happy_index_entries (
+create table if not exists public.happy_index_entries (
     id bigserial primary key,
     created_at timestamptz not null default now(),
     user_name text not null,
@@ -81,30 +112,34 @@ create table if not exists public happy_index_entries (
 );
 
 create index if not exists idx_happy_index_entries_created_at
-    on public happy_index_entries (created_at desc);
+    on public.happy_index_entries (created_at desc);
 
-create index if not exists idx_happy_index_entries_mood_label
-    on public happy_index_entries (mood_label);
+create index if not exists idx_happy_index_entries_user_name
+    on public.happy_index_entries (lower(trim(user_name)));
 ```
 
-字段说明：
+## 部署到 Streamlit Community Cloud
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `id` | `bigserial` | 主键 |
-| `created_at` | `timestamptz` | 记录创建时间，默认数据库当前时间 |
-| `user_name` | `text` | 用户昵称 |
-| `mood_score` | `integer` | 心情分数，1-10 |
-| `mood_label` | `text` | 心情标签，例如开心、平静、焦虑、疲惫、低落、兴奋 |
-| `note` | `text` | 一句话备注 |
+1. 在 Streamlit Community Cloud 新建应用。
+2. 选择该 GitHub 仓库和准备部署的分支。
+3. 入口文件选择 `streamlit_app.py`。
+4. 建议使用 Python 3.12。
+5. 在 App Settings 中填入数据库 Secrets。
 
-## 功能清单
+如果 Secrets 未配置或数据库暂时不可用，应用会进入 Demo 模式。
 
-- 首页标题：`Happy Index 心情指数`
-- 每日心情记录表单
-- PostgreSQL/Supabase 持久化写入
-- 无数据库配置时自动进入 demo 模式
-- 最近 30 条心情记录
-- 最近 7 天/30 天平均心情趋势图
-- 不同心情标签分布图
-- 简单洞察区：当前平均心情分、最近一次记录、最常见心情标签、本周最低心情日期
+## 已知边界
+
+- 当前 MVP 使用昵称查找记录，昵称不是可靠的身份验证。
+- 在面向公众保存真实情绪数据前，必须增加登录、行级数据权限、删除与账户注销能力。
+- 当前允许一天记录多次，并以当天平均值绘制趋势。
+- 规则化提示只描述数据变化，不推断心理状态。
+
+## 下一阶段
+
+P1 建议优先级：
+
+1. 增加账号登录和 Supabase Row Level Security。
+2. 支持编辑或删除本人记录。
+3. 增加“影响因素”结构化标签，但避免过度量化。
+4. 增加每周回顾，不做自动心理诊断。

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
 import pandas as pd
@@ -9,9 +9,30 @@ import psycopg2
 import psycopg2.extras
 import streamlit as st
 
+from mood_logic import (
+    APP_TIMEZONE,
+    ENTRY_COLUMNS,
+    MOOD_LABELS,
+    build_demo_dataframe,
+    calculate_summary,
+    daily_average,
+    entries_for_period,
+    filter_entries,
+    normalize_entries,
+    reflection_text,
+    score_description,
+)
 
-MOOD_LABELS = ["开心", "平静", "焦虑", "疲惫", "低落", "兴奋"]
+
 TABLE_NAME = "happy_index_entries"
+MOOD_EMOJI = {
+    "开心": "😊",
+    "平静": "😌",
+    "焦虑": "😟",
+    "疲惫": "😮‍💨",
+    "低落": "😔",
+    "兴奋": "🤩",
+}
 
 
 @dataclass(frozen=True)
@@ -34,7 +55,7 @@ class DatabaseConfig:
 
 
 def get_database_config() -> DatabaseConfig | None:
-    """Read database config from st.secrets without requiring local secrets."""
+    """Read database settings without requiring local secrets."""
 
     try:
         database_secrets = st.secrets.get("database", {})
@@ -62,7 +83,6 @@ def connect_to_database(config: DatabaseConfig):
 
     if config.url:
         return psycopg2.connect(config.url, sslmode=config.sslmode)
-
     return psycopg2.connect(
         host=config.host,
         port=config.port,
@@ -88,276 +108,534 @@ def insert_mood_entry(
     """
     with connect_to_database(config) as connection:
         with connection.cursor() as cursor:
-            cursor.execute(query, (user_name, mood_score, mood_label, note))
+            cursor.execute(
+                query,
+                (user_name, mood_score, mood_label, note),
+            )
 
 
-def load_mood_entries(config: DatabaseConfig) -> pd.DataFrame:
-    """Load mood entries for charts and recent-record display."""
+def load_mood_entries(
+    config: DatabaseConfig, user_name: str
+) -> pd.DataFrame:
+    """Load one profile's entries instead of exposing every user's records."""
 
     query = f"""
         SELECT id, created_at, user_name, mood_score, mood_label, note
         FROM {TABLE_NAME}
+        WHERE lower(trim(user_name)) = lower(trim(%s))
         ORDER BY created_at DESC
-        LIMIT 300
+        LIMIT 500
     """
     with connect_to_database(config) as connection:
         with connection.cursor(
             cursor_factory=psycopg2.extras.RealDictCursor
         ) as cursor:
-            cursor.execute(query)
+            cursor.execute(query, (user_name,))
             rows: list[dict[str, Any]] = cursor.fetchall()
-
     return normalize_entries(pd.DataFrame(rows))
 
 
-def build_demo_dataframe() -> pd.DataFrame:
-    """Create deterministic demo data for Streamlit Cloud without secrets."""
+@st.cache_data(ttl=60, show_spinner=False)
+def load_entries_cached(
+    database_available: bool, user_name: str
+) -> pd.DataFrame:
+    """Load one profile with a short cache for responsive reruns."""
 
-    today = date.today()
-    labels = ["平静", "开心", "疲惫", "焦虑", "兴奋", "低落", "平静"]
-    scores = [7, 8, 5, 4, 9, 3, 7]
-    rows: list[dict[str, Any]] = []
+    if not user_name.strip():
+        return pd.DataFrame(columns=ENTRY_COLUMNS + ["entry_date"])
 
-    for index in range(30):
-        day = today - timedelta(days=29 - index)
-        label = labels[index % len(labels)]
-        score = max(1, min(10, scores[index % len(scores)] + ((index % 3) - 1)))
-        rows.append(
-            {
-                "id": index + 1,
-                "created_at": datetime.combine(
-                    day, datetime.min.time(), tzinfo=timezone.utc
-                ),
-                "user_name": "demo_user",
-                "mood_score": score,
-                "mood_label": label,
-                "note": "Demo 模式示例记录",
-            }
-        )
-
-    return normalize_entries(pd.DataFrame(rows).sort_values("created_at", ascending=False))
+    config = get_database_config()
+    if not database_available or config is None:
+        return filter_entries(build_demo_dataframe(), user_name)
+    return load_mood_entries(config, user_name)
 
 
-def normalize_entries(entries: pd.DataFrame) -> pd.DataFrame:
-    """Ensure expected columns and datetime fields exist."""
+def inject_styles() -> None:
+    """Apply a restrained visual system while keeping native controls."""
 
-    columns = ["id", "created_at", "user_name", "mood_score", "mood_label", "note"]
-    if entries.empty:
-        return pd.DataFrame(columns=columns + ["entry_date"])
-
-    normalized = entries.copy()
-    for column in columns:
-        if column not in normalized.columns:
-            normalized[column] = None
-
-    normalized["created_at"] = pd.to_datetime(normalized["created_at"], errors="coerce")
-    normalized = normalized.dropna(subset=["created_at"])
-    normalized["mood_score"] = pd.to_numeric(
-        normalized["mood_score"], errors="coerce"
-    ).astype("Int64")
-    normalized["entry_date"] = normalized["created_at"].dt.date
-    return normalized[columns + ["entry_date"]]
-
-
-def daily_average(entries: pd.DataFrame, days: int) -> pd.DataFrame:
-    """Return average mood by day for the requested period."""
-
-    if entries.empty:
-        return pd.DataFrame(columns=["entry_date", "average_mood_score"])
-
-    start_date = date.today() - timedelta(days=days - 1)
-    recent = entries[entries["entry_date"] >= start_date]
-    grouped = (
-        recent.groupby("entry_date", as_index=False)["mood_score"]
-        .mean()
-        .rename(columns={"mood_score": "average_mood_score"})
-        .sort_values("entry_date")
+    st.markdown(
+        """
+        <style>
+        :root {
+            --ink: #24332D;
+            --muted: #64736D;
+            --line: #DFE7E2;
+            --paper: #FFFFFF;
+            --wash: #F4F8F5;
+            --brand: #2E6B52;
+            --accent: #F0B75B;
+        }
+        .stApp {
+            background:
+                radial-gradient(circle at 85% 4%, rgba(240,183,91,.14), transparent 25rem),
+                linear-gradient(180deg, #F8FBF9 0%, #F4F8F5 100%);
+            color: var(--ink);
+        }
+        .block-container {
+            max-width: 1120px;
+            padding-top: 2rem;
+            padding-bottom: 4rem;
+        }
+        h1, h2, h3 { color: var(--ink); letter-spacing: -0.02em; }
+        .app-kicker {
+            color: var(--brand);
+            font-size: .82rem;
+            font-weight: 700;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            margin-bottom: .45rem;
+        }
+        .app-title {
+            color: var(--ink);
+            font-size: clamp(2rem, 5vw, 3.25rem);
+            font-weight: 760;
+            line-height: 1.08;
+            letter-spacing: -.045em;
+            margin: 0;
+        }
+        .app-subtitle {
+            color: var(--muted);
+            font-size: 1.02rem;
+            line-height: 1.7;
+            max-width: 42rem;
+            margin-top: .8rem;
+        }
+        .soft-card {
+            background: rgba(255,255,255,.88);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            box-shadow: 0 14px 34px rgba(40,72,58,.06);
+            padding: 1.25rem 1.35rem;
+            margin-bottom: 1rem;
+        }
+        .soft-card-label {
+            color: var(--muted);
+            font-size: .82rem;
+            font-weight: 650;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+        .soft-card-value {
+            color: var(--ink);
+            font-size: 1.45rem;
+            font-weight: 720;
+            margin: .35rem 0;
+        }
+        .soft-card-copy { color: var(--muted); line-height: 1.55; }
+        div[data-testid="stMetric"] {
+            background: rgba(255,255,255,.86);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 1rem 1.05rem;
+            box-shadow: 0 8px 20px rgba(40,72,58,.04);
+        }
+        div[data-testid="stMetricLabel"] { color: var(--muted); }
+        div[data-testid="stForm"] {
+            background: rgba(255,255,255,.9);
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            padding: 1.25rem;
+            box-shadow: 0 14px 34px rgba(40,72,58,.05);
+        }
+        .stButton > button, .stDownloadButton > button,
+        div[data-testid="stFormSubmitButton"] > button {
+            min-height: 44px;
+            border-radius: 12px;
+            font-weight: 650;
+        }
+        div[data-testid="stFormSubmitButton"] > button {
+            background: var(--brand);
+            border-color: var(--brand);
+            color: white;
+        }
+        div[data-testid="stFormSubmitButton"] > button:hover {
+            background: #245841;
+            border-color: #245841;
+            color: white;
+        }
+        div[data-testid="stAlert"] { border-radius: 14px; }
+        div[data-testid="stTabs"] button { min-height: 44px; }
+        [data-testid="stSidebar"] {
+            background: rgba(250,252,250,.96);
+            border-right: 1px solid var(--line);
+        }
+        @media (max-width: 700px) {
+            .block-container { padding: 1.2rem 1rem 3rem; }
+            .app-title { font-size: 2.25rem; }
+            .soft-card { border-radius: 16px; padding: 1rem; }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
     )
-    grouped["entry_date"] = pd.to_datetime(grouped["entry_date"])
-    return grouped
 
 
-def render_trend_chart(entries: pd.DataFrame, days: int) -> None:
-    """Render a daily average mood trend chart."""
+def initialize_session() -> None:
+    """Initialize lightweight demo persistence and profile state."""
 
-    trend = daily_average(entries, days)
-    if trend.empty:
-        st.info(f"最近 {days} 天暂无心情记录。")
+    if "demo_entries" not in st.session_state:
+        st.session_state.demo_entries = []
+    if "active_user" not in st.session_state:
+        st.session_state.active_user = "demo_user"
+    if "entry_saved" not in st.session_state:
+        st.session_state.entry_saved = False
+
+
+def combine_demo_entries(entries: pd.DataFrame) -> pd.DataFrame:
+    """Merge this browser session's demo submissions into example data."""
+
+    if not st.session_state.demo_entries:
+        return entries
+    session_entries = normalize_entries(
+        pd.DataFrame(st.session_state.demo_entries)
+    )
+    return normalize_entries(pd.concat([entries, session_entries]))
+
+
+def render_header(demo_mode: bool) -> None:
+    mode_text = "可交互演示" if demo_mode else "数据库已连接"
+    st.markdown(
+        f"""
+        <div class="app-kicker">Daily emotional check-in · {mode_text}</div>
+        <h1 class="app-title">Happy Index<br>心情指数</h1>
+        <p class="app-subtitle">
+            用一分钟记录今天的感受。这里帮助你看见变化、回顾原因，
+            不评判情绪，也不替代专业心理支持。
+        </p>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_sidebar(demo_mode: bool) -> str:
+    """Render identity, mode information, and data boundaries."""
+
+    with st.sidebar:
+        st.markdown("### 个人空间")
+        user_name = st.text_input(
+            "你的昵称",
+            key="active_user",
+            max_chars=40,
+            help="昵称用于查找你的记录。当前 MVP 尚未提供账号登录。",
+        )
+        if demo_mode:
+            st.info(
+                "当前是演示模式。你提交的记录只保存在本次浏览会话中，刷新服务后可能消失。"
+            )
+        else:
+            st.success("数据库已连接，提交后会保存。")
+
+        st.markdown("---")
+        st.caption(
+            "隐私提醒：昵称不是身份验证。正式公开使用前，应增加账号登录和数据访问控制。"
+        )
+    return user_name.strip()
+
+
+def render_today_status(entries: pd.DataFrame) -> None:
+    """Show whether the active profile has checked in today."""
+
+    today_entries = entries[entries["entry_date"] == date.today()]
+    if today_entries.empty:
+        st.markdown(
+            """
+            <div class="soft-card">
+                <div class="soft-card-label">Today · 今天</div>
+                <div class="soft-card-value">还没有记录</div>
+                <div class="soft-card-copy">停一会儿，按真实感受选择，不必选“应该有的心情”。</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         return
 
-    chart_data = trend.set_index("entry_date")["average_mood_score"]
-    st.line_chart(chart_data, height=280, y_label="平均心情分")
-
-
-def render_label_distribution(entries: pd.DataFrame) -> None:
-    """Render mood label distribution."""
-
-    if entries.empty:
-        st.info("暂无心情标签记录。")
-        return
-
-    distribution = (
-        entries.groupby("mood_label", as_index=False)
-        .size()
-        .rename(columns={"size": "count"})
-        .sort_values("count", ascending=False)
+    latest = today_entries.sort_values("created_at", ascending=False).iloc[0]
+    emoji, description = score_description(int(latest["mood_score"]))
+    label_emoji = MOOD_EMOJI.get(str(latest["mood_label"]), "•")
+    st.markdown(
+        f"""
+        <div class="soft-card">
+            <div class="soft-card-label">Today · 已记录</div>
+            <div class="soft-card-value">
+                {emoji} {int(latest["mood_score"])} / 10
+                · {label_emoji} {latest["mood_label"]}
+            </div>
+            <div class="soft-card-copy">{description}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    chart_data = distribution.set_index("mood_label")["count"]
-    st.bar_chart(chart_data, height=280, y_label="记录数")
 
 
-def render_insights(entries: pd.DataFrame) -> None:
-    """Render simple insight cards."""
+def render_entry_form(
+    config: DatabaseConfig | None, demo_mode: bool, user_name: str
+) -> None:
+    """Render a short daily check-in and persist one submission."""
 
-    if entries.empty:
-        st.info("提交第一条记录后，这里会生成心情洞察。")
-        return
-
-    valid_scores = entries.dropna(subset=["mood_score"])
-    current_average = valid_scores["mood_score"].mean()
-    latest = entries.sort_values("created_at", ascending=False).iloc[0]
-    most_common_label = entries["mood_label"].mode()
-
-    week_start = date.today() - timedelta(days=6)
-    this_week = valid_scores[valid_scores["entry_date"] >= week_start]
-    if this_week.empty:
-        lowest_day_text = "最近 7 天暂无记录"
-    else:
-        lowest_record = this_week.sort_values(["mood_score", "created_at"]).iloc[0]
-        lowest_day_text = (
-            f"{lowest_record['entry_date']}（{int(lowest_record['mood_score'])} 分）"
-        )
-
-    col_a, col_b, col_c, col_d = st.columns(4)
-    col_a.metric("当前平均心情分", f"{current_average:.2f}")
-    col_b.metric("最近一次记录", f"{int(latest['mood_score'])} 分")
-    col_c.metric(
-        "最常见心情标签",
-        most_common_label.iloc[0] if not most_common_label.empty else "暂无",
-    )
-    col_d.metric("本周最低心情日期", lowest_day_text)
-
-    with st.expander("最近一次记录详情", expanded=False):
-        st.write(
-            {
-                "昵称": latest["user_name"],
-                "心情标签": latest["mood_label"],
-                "备注": latest["note"] or "无",
-                "记录时间": latest["created_at"],
-            }
-        )
-
-
-def render_entry_form(config: DatabaseConfig | None, demo_mode: bool) -> None:
-    """Render the mood-entry form and handle submit."""
+    st.markdown("### 记录此刻")
+    st.caption("约 1 分钟完成。心情没有正确答案，分数只代表你此刻的主观感受。")
 
     with st.form("mood_entry_form", clear_on_submit=True):
-        user_name = st.text_input("昵称 user_name", max_chars=40)
-        mood_score = st.slider("心情分数 mood_score", min_value=1, max_value=10, value=7)
-        mood_label = st.selectbox("心情标签 mood_label", MOOD_LABELS)
-        note = st.text_area("一句话备注 note", max_chars=200)
-        submitted = st.form_submit_button("提交记录")
+        mood_score = st.slider(
+            "此刻的心情分数",
+            min_value=1,
+            max_value=10,
+            value=6,
+            help="1 代表非常低落，10 代表状态很好。",
+        )
+        mood_label = st.radio(
+            "最接近哪种感受？",
+            MOOD_LABELS,
+            horizontal=True,
+            format_func=lambda label: f"{MOOD_EMOJI[label]} {label}",
+        )
+        note = st.text_area(
+            "发生了什么？（可选）",
+            placeholder="一句话就好，例如：完成了拖延很久的事，感觉轻松了一些。",
+            max_chars=200,
+        )
+        submitted = st.form_submit_button(
+            "保存今天的心情",
+            type="primary",
+            use_container_width=True,
+        )
 
     if not submitted:
         return
-
-    if not user_name.strip():
-        st.warning("请先填写昵称。")
+    if not user_name:
+        st.warning("请先在左侧填写昵称，再保存记录。")
         return
 
     if demo_mode or config is None:
-        st.info("当前为 demo 模式：未配置数据库，提交不会写入持久化数据库。")
-        return
+        st.session_state.demo_entries.append(
+            {
+                "id": f"session-{len(st.session_state.demo_entries) + 1}",
+                "created_at": datetime.now(timezone.utc),
+                "user_name": user_name,
+                "mood_score": mood_score,
+                "mood_label": mood_label,
+                "note": note.strip(),
+            }
+        )
+        st.session_state.entry_saved = True
+        st.rerun()
 
     try:
         insert_mood_entry(
             config=config,
-            user_name=user_name.strip(),
+            user_name=user_name,
             mood_score=mood_score,
             mood_label=mood_label,
             note=note.strip(),
         )
-    except Exception as error:
-        st.error(f"写入数据库失败：{error}")
+    except Exception:
+        st.error("保存失败，请稍后重试。数据库详细错误未显示，以避免泄露连接信息。")
     else:
-        st.success("记录已提交。")
+        st.session_state.entry_saved = True
         st.cache_data.clear()
         st.rerun()
 
 
-@st.cache_data(ttl=60)
-def load_entries_cached(database_available: bool) -> pd.DataFrame:
-    """Load entries with a short cache to keep the app responsive."""
+def render_summary(entries: pd.DataFrame) -> None:
+    """Render compact, descriptive insights."""
 
-    config = get_database_config()
-    if not database_available or config is None:
-        return build_demo_dataframe()
-    return load_mood_entries(config)
+    summary = calculate_summary(entries)
+    st.markdown("### 你的近况")
+    if summary.record_count == 0:
+        st.info("保存第一条记录后，这里会逐步形成只属于你的趋势。")
+        return
+
+    average = (
+        f"{summary.average_score:.1f} / 10"
+        if summary.average_score is not None
+        else "—"
+    )
+    change = (
+        f"{summary.seven_day_change:+.1f}"
+        if summary.seven_day_change is not None
+        else "数据不足"
+    )
+    col_a, col_b, col_c, col_d = st.columns(4)
+    col_a.metric("全部记录", f"{summary.record_count} 次")
+    col_b.metric("平均心情", average)
+    col_c.metric("连续记录", f"{summary.current_streak} 天")
+    col_d.metric("近 7 天变化", change, help="最近 7 天均值减去此前 7 天均值")
+
+    st.markdown(
+        f"""
+        <div class="soft-card">
+            <div class="soft-card-label">Reflection · 温和回看</div>
+            <div class="soft-card-copy">{reflection_text(summary)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_trend_chart(entries: pd.DataFrame, days: int) -> None:
+    trend = daily_average(entries, days)
+    if trend.empty:
+        st.info(f"最近 {days} 天暂无记录。")
+        return
+
+    chart_data = trend.set_index("entry_date")[["average_mood_score"]]
+    st.line_chart(
+        chart_data,
+        height=320,
+        color=["#2E6B52"],
+        y_label="平均心情分",
+    )
+    st.caption("每日多次记录会先计算当天平均值；分数仅反映主观感受。")
+
+
+def render_distribution(entries: pd.DataFrame, days: int) -> None:
+    recent = entries_for_period(entries, days)
+    if recent.empty:
+        st.info(f"最近 {days} 天暂无标签记录。")
+        return
+
+    distribution = (
+        recent.groupby("mood_label", as_index=False)
+        .size()
+        .rename(columns={"size": "记录次数"})
+        .sort_values("记录次数", ascending=False)
+    )
+    distribution["感受"] = distribution["mood_label"].map(
+        lambda label: f"{MOOD_EMOJI.get(label, '•')} {label}"
+    )
+    st.bar_chart(
+        distribution.set_index("感受")[["记录次数"]],
+        height=320,
+        color=["#F0B75B"],
+        y_label="记录次数",
+    )
+
+
+def render_history(entries: pd.DataFrame) -> None:
+    if entries.empty:
+        st.info("暂无记录。")
+        return
+
+    display = entries.sort_values("created_at", ascending=False).head(100).copy()
+    display["日期"] = (
+        display["created_at"]
+        .dt.tz_convert(APP_TIMEZONE)
+        .dt.strftime("%Y-%m-%d %H:%M")
+    )
+    display["分数"] = display["mood_score"]
+    display["感受"] = display["mood_label"].map(
+        lambda label: f"{MOOD_EMOJI.get(label, '•')} {label}"
+    )
+    display["备注"] = display["note"].replace("", "—")
+    st.dataframe(
+        display[["日期", "分数", "感受", "备注"]],
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "分数": st.column_config.ProgressColumn(
+                "分数", min_value=1, max_value=10, format="%d"
+            )
+        },
+    )
+
+    export = display[["日期", "分数", "mood_label", "备注"]].rename(
+        columns={"mood_label": "心情标签"}
+    )
+    st.download_button(
+        "导出 CSV",
+        data=export.to_csv(index=False).encode("utf-8-sig"),
+        file_name=f"happy-index-{date.today().isoformat()}.csv",
+        mime="text/csv",
+        use_container_width=False,
+    )
+
+
+def render_explore(entries: pd.DataFrame) -> None:
+    """Render one compact exploration area instead of four competing tabs."""
+
+    st.markdown("### 看见变化")
+    period = st.segmented_control(
+        "时间范围",
+        options=[7, 30, 90],
+        default=30,
+        format_func=lambda value: f"{value} 天",
+        label_visibility="collapsed",
+    )
+    selected_days = int(period or 30)
+
+    trend_tab, label_tab, history_tab = st.tabs(
+        ["趋势", "感受分布", "记录"]
+    )
+    with trend_tab:
+        render_trend_chart(entries, selected_days)
+    with label_tab:
+        render_distribution(entries, selected_days)
+    with history_tab:
+        render_history(entries)
 
 
 def main() -> None:
     st.set_page_config(
-        page_title="Happy Index 心情指数",
-        page_icon="💛",
+        page_title="Happy Index · 心情指数",
+        page_icon="🌤️",
         layout="wide",
+        initial_sidebar_state="expanded",
     )
-
-    st.title("Happy Index 心情指数")
-    st.caption("每天记录一个 1-10 分的心情指数，观察自己的情绪趋势。")
+    inject_styles()
+    initialize_session()
 
     config = get_database_config()
     demo_mode = config is None
+    user_name = render_sidebar(demo_mode)
+    render_header(demo_mode)
 
-    if demo_mode:
-        st.warning(
-            "Demo 模式：当前未检测到 Streamlit secrets 中的数据库配置，"
-            "页面使用本地示例数据展示，提交不会写入数据库。"
-        )
-    else:
-        st.success("数据库模式：已检测到数据库配置，提交记录会写入 PostgreSQL/Supabase。")
+    if st.session_state.entry_saved:
+        st.success("已保存。谢谢你认真看见了此刻的自己。")
+        st.session_state.entry_saved = False
 
     try:
-        entries = load_entries_cached(database_available=not demo_mode)
-    except Exception as error:
-        st.error(f"读取数据库失败，已切换为 demo 数据展示：{error}")
-        demo_mode = True
-        entries = build_demo_dataframe()
-
-    st.subheader("记录今天的心情")
-    render_entry_form(config=config, demo_mode=demo_mode)
-
-    st.divider()
-    st.subheader("简单洞察")
-    render_insights(entries)
-
-    st.divider()
-    trend_tab_7, trend_tab_30, label_tab, recent_tab = st.tabs(
-        ["最近 7 天趋势", "最近 30 天趋势", "心情标签分布", "最近 30 条记录"]
-    )
-
-    with trend_tab_7:
-        render_trend_chart(entries, days=7)
-
-    with trend_tab_30:
-        render_trend_chart(entries, days=30)
-
-    with label_tab:
-        render_label_distribution(entries)
-
-    with recent_tab:
-        recent_columns = [
-            "created_at",
-            "user_name",
-            "mood_score",
-            "mood_label",
-            "note",
-        ]
-        recent_entries = (
-            entries.sort_values("created_at", ascending=False)
-            .head(30)
-            .loc[:, recent_columns]
+        entries = load_entries_cached(
+            database_available=not demo_mode,
+            user_name=user_name,
         )
-        st.dataframe(recent_entries, use_container_width=True, hide_index=True)
+    except Exception:
+        st.error("暂时无法读取数据库，已切换到演示数据。")
+        demo_mode = True
+        entries = filter_entries(build_demo_dataframe(), user_name)
+
+    if demo_mode:
+        entries = combine_demo_entries(entries)
+        entries = filter_entries(entries, user_name)
+
+    st.write("")
+    left, right = st.columns([1.45, 1], gap="large")
+    with left:
+        render_entry_form(config, demo_mode, user_name)
+    with right:
+        render_today_status(entries)
+        st.markdown(
+            """
+            <div class="soft-card">
+                <div class="soft-card-label">A small reminder</div>
+                <div class="soft-card-copy">
+                    一次低分不等于糟糕的一天。记录的目标不是让曲线一直向上，
+                    而是更早发现自己需要什么。
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.write("")
+    render_summary(entries)
+    st.write("")
+    render_explore(entries)
+
+    st.divider()
+    st.caption(
+        "Happy Index 提供个人记录与回顾，不进行心理诊断。"
+        "如果低落或痛苦持续影响生活，请向可信任的人或专业人士寻求支持。"
+    )
 
 
 if __name__ == "__main__":
